@@ -1,0 +1,24 @@
+# This is a template for the Nginx reverse proxy configuration.
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+
+    # Standard proxy settings to ensure proper header forwarding
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # Health check endpoint for the public ALB
+    location /health {
+        access_log off;
+        return 200 "OK";
+    }
+
+    # Main location block to forward traffic
+    location / {
+        # The internal ALB DNS name will be dynamically inserted here by Terraform.
+        proxy_pass http://${internal_alb_dns_name};
+    }
+}
